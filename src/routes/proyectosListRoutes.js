@@ -165,18 +165,19 @@ const db = require('../db/connection');
 
 router.get('/proyectos-list', async (req, res) => {
   try {
-    const { secretaria, sector, proyecto, nombreProyecto } = req.query;
+    const { secretaria, sector, proyecto, nombreProyecto, cpc } = req.query;
     
     // 1. Consulta para obtener datos de la plantilla
     let query = db
       .withSchema('sis_cuipo')
-      .select('nombre_proyecto', 'proyecto', 'sector_cuipo', 'secretaria')
+      .select('nombre_proyecto', 'proyecto', 'sector_cuipo', 'secretaria', 'tiene_cpc')
       .from('cuipo_plantilla_distrito_2025_vf');
 
     if (secretaria) query = query.where('secretaria', secretaria);
     if (sector) query = query.where('sector_cuipo', sector);
     if (proyecto) query = query.where('proyecto', proyecto);
     if (nombreProyecto) query = query.where('nombre_proyecto', nombreProyecto);
+    if (cpc) query = query.where('tiene_cpc', cpc);
 
     const proyectosPlantilla = await query;
 

@@ -12,6 +12,7 @@ const catalogoProductosRoutes = require('./src/routes/catalogoProductosRoutes');
 const dependenciasPlantillaRoutes = require('./src/routes/dependenciasPlantillaRoutes');
 const proyectosListRoutes = require('./src/routes/proyectosListRoutes');
 const datosFinancierosRoutes = require('./src/routes/datosFinancierosRoutes');
+const cuipoRoutes = require('./src/routes/cuipoRoutes');
 
 const app = express();
 
@@ -22,9 +23,9 @@ const swaggerOptions = {
     info: {
       title: 'API CUIPO',
       version: '1.0.0',
-      description: 'Documentación de la API para el sistema CUIPO',
+      description: '🛠️ Documentación de la API para el sistema CUIPO 🎯',
       contact: {
-        name: "Juan Camilo Cardona Pizarro",
+        name: "🔍 Juan Camilo Cardona Pizarro",
         email: "jucampuca@gmail.com"
       }
     },
@@ -72,5 +73,6 @@ app.use('/api/v1/cuipo', catalogoProductosRoutes);
 app.use('/api/v1/cuipo', dependenciasPlantillaRoutes);
 app.use('/api/v1/cuipo', proyectosListRoutes);
 app.use('/api/v1/cuipo', datosFinancierosRoutes);
+app.use('/api/v1/cuipo', cuipoRoutes);
 
 module.exports = app;
