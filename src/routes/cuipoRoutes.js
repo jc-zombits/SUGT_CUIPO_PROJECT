@@ -84,4 +84,64 @@ router.get('/cpc-opciones', async (req, res) => {
     }
 });
 
+router.get('/productos-mga', async (req, res) => {
+    try {
+        // 1. Verificar conexión a la BD
+        await db.raw('SELECT 1');
+        
+        // 2. Verificar si la tabla existe
+        const tableExists = await db.schema.withSchema('sis_cuipo').hasTable('producto_mga');
+        if (!tableExists) {
+            return res.status(404).json({
+                success: false,
+                error: 'La tabla producto_mga no existe en el esquema sis_cuipo',
+                data: []
+            });
+        }
+
+        // 3. Consultar todos los productos MGA (campo concatenar)
+        const productos = await db
+            .withSchema('sis_cuipo')
+            .select('concatenar', 'codigo')
+            .from('producto_mga')
+            .orderBy('concatenar', 'asc');
+
+        if (!productos || productos.length === 0) {
+            return res.json({
+                success: true,
+                message: 'No se encontraron productos MGA',
+                data: []
+            });
+        }
+
+        // 4. Mapear resultados
+        const opciones = productos.map(p => ({
+            valorCompleto: p.concatenar,
+            codigo: p.codigo
+        }));
+
+        return res.json({
+            success: true,
+            data: opciones
+        });
+
+    } catch (error) {
+        console.error('Error al obtener productos MGA:', {
+            message: error.message,
+            stack: error.stack,
+            sql: error.sql
+        });
+
+        return res.status(500).json({
+            success: false,
+            error: 'Error del servidor al obtener productos MGA',
+            details: process.env.NODE_ENV === 'development' ? {
+                message: error.message,
+                sql: error.sql
+            } : undefined,
+            data: []
+        });
+    }
+});
+
 module.exports = router;
