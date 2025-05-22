@@ -2,6 +2,101 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/connection');
 
+/**
+ * @swagger
+ * tags:
+ *   - name: CPC
+ *     description: Operaciones relacionadas con códigos CPC
+ *   - name: Productos MGA
+ *     description: Operaciones relacionadas con productos MGA
+ */
+
+/**
+ * @swagger
+ * /api/v1/cuipo/cpc-opciones:
+ *   get:
+ *     tags: [CPC]
+ *     summary: Obtiene opciones de CPC basadas en una consulta
+ *     description: Retorna una lista de códigos CPC que coinciden con el criterio de búsqueda
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Cadena de búsqueda para filtrar códigos CPC
+ *     responses:
+ *       200:
+ *         description: Lista de opciones CPC encontradas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                     example: "12345 - Descripción del producto"
+ *       400:
+ *         description: Parámetro query faltante
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: 'El parámetro "query" es requerido'
+ *       404:
+ *         description: Tabla CPC no encontrada
+ *       500:
+ *         description: Error del servidor
+ */
+
+/**
+ * @swagger
+ * /api/v1/cuipo/productos-mga:
+ *   get:
+ *     tags: [Productos MGA]
+ *     summary: Obtiene todos los productos MGA disponibles
+ *     description: Retorna una lista completa de productos MGA con su código y valor concatenado
+ *     responses:
+ *       200:
+ *         description: Lista de productos MGA
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       valorCompleto:
+ *                         type: string
+ *                         description: Valor concatenado del producto
+ *                         example: "1234567 - Nombre completo del producto"
+ *                       codigo:
+ *                         type: string
+ *                         description: Código del producto (primeros 7 dígitos del valorCompleto)
+ *                         example: "1234567"
+ *       404:
+ *         description: Tabla producto_mga no encontrada
+ *       500:
+ *         description: Error del servidor
+ */
+
 router.get('/cpc-opciones', async (req, res) => {
     const { query } = req.query;
 

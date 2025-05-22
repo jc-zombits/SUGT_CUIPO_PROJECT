@@ -13,6 +13,8 @@ const dependenciasPlantillaRoutes = require('./src/routes/dependenciasPlantillaR
 const proyectosListRoutes = require('./src/routes/proyectosListRoutes');
 const datosFinancierosRoutes = require('./src/routes/datosFinancierosRoutes');
 const cuipoRoutes = require('./src/routes/cuipoRoutes');
+const proyectosPageRoutes = require('./src/routes/proyectosPageRoutes');
+const ejecucionRoutes = require('./src/routes/ejecucionRoutes');
 
 const app = express();
 
@@ -74,5 +76,7 @@ app.use('/api/v1/cuipo', dependenciasPlantillaRoutes);
 app.use('/api/v1/cuipo', proyectosListRoutes);
 app.use('/api/v1/cuipo', datosFinancierosRoutes);
 app.use('/api/v1/cuipo', cuipoRoutes);
+app.use('/api/v1/cuipo', proyectosPageRoutes);
+app.use('/api/v1/cuipo', ejecucionRoutes);
 
 module.exports = app;
