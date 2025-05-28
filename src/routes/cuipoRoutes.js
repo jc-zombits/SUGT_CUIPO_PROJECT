@@ -97,63 +97,70 @@ const db = require('../db/connection');
  *         description: Error del servidor
  */
 
+// Endpoint para obtener opciones de CPC
 router.get('/cpc-opciones', async (req, res) => {
-    const { query } = req.query;
+    try {
+        const { query } = req.query;
 
-    if (!query) {
-        return res.status(400).json({ 
+        // 1. Verifica la conexión
+        await db.raw('SELECT 1');
+
+        // 2. Consulta desde la tabla CPC, usando el campo codigo_clase_o_subclase
+        const resultados = await db
+            .withSchema('sis_cuipo')
+            .distinct('codigo_clase_o_subclase as cpc')
+            .from('cpc')
+            .modify(qb => {
+                if (query) {
+                    qb.where('codigo_clase_o_subclase', 'ILIKE', `%${query}%`);
+                }
+            })
+            .orderBy('cpc', 'asc');
+
+        // 3. Formateo de resultados
+        const opciones = resultados
+            .filter(r => r.cpc)
+            .map(r => r.cpc);
+
+        return res.json({
+            success: true,
+            data: opciones
+        });
+
+    } catch (error) {
+        console.error('Error en /cpc-opciones:', {
+            message: error.message,
+            stack: error.stack,
+            sql: error.sql
+        });
+
+        return res.status(500).json({
             success: false,
-            error: 'El parámetro "query" es requerido',
+            error: 'Error al consultar CPC',
+            details: process.env.NODE_ENV === 'development' ? {
+                message: error.message,
+                sql: error.sql
+            } : undefined,
             data: []
         });
     }
+});
 
+
+// Endpoint para obtener opciones de Productos MGA
+router.get('/productos-mga', async (req, res) => {
     try {
-        // 1. Primero verifiquemos la conexión a la base de datos
-        await db.raw('SELECT 1');
-        console.log('Conexión a la BD verificada correctamente');
-
-        // 2. Verifiquemos si la tabla existe
-        const tableExists = await db.schema.withSchema('sis_cuipo').hasTable('cpc');
-        if (!tableExists) {
-            return res.status(404).json({
-                success: false,
-                error: 'La tabla cpc no existe en el esquema sis_cuipo',
-                data: []
-            });
-        }
-
-        // 3. Consulta con más detalles de depuración
-        console.log(`Ejecutando consulta para: ${query}`);
+        const { query } = req.query;
         
         const resultados = await db
             .withSchema('sis_cuipo')
-            .select('codigo_clase_o_subclase')
-            .from('cpc')
-            .where('codigo_clase_o_subclase', 'ILIKE', `%${query}%`)
-            .orderBy('codigo_clase_o_subclase', 'asc');
+            .distinct('C_digo_y_Nombre_del_Producto_MGA')
+            .from('cuipo_plantilla_distrito_2025_primer_trimestre_plan_b')
+            .where('C_digo_y_Nombre_del_Producto_MGA', 'ILIKE', `%${query || ''}%`)
+            .andWhereNot('C_digo_y_Nombre_del_Producto_MGA', 'Favor seleccionar una opción')
+            .orderBy('C_digo_y_Nombre_del_Producto_MGA', 'asc');
 
-        console.log('Resultados de la consulta:', resultados);
-
-        if (!resultados || resultados.length === 0) {
-            console.log('No se encontraron resultados para la búsqueda');
-            return res.json({
-                success: true,
-                message: 'No se encontraron coincidencias',
-                data: []
-            });
-        }
-
-        // 4. Mapeo seguro de resultados
-        const opciones = resultados.map(r => {
-            if (!r.codigo_clase_o_subclase) {
-                console.warn('Registro sin codigo_clase_o_subclase:', r);
-                return 'Código no disponible';
-            }
-            return r.codigo_clase_o_subclase;
-        });
-
-        console.log('Opciones a devolver:', opciones);
+        const opciones = resultados.map(r => r.C_digo_y_Nombre_del_Producto_MGA);
 
         return res.json({
             success: true,
@@ -161,59 +168,28 @@ router.get('/cpc-opciones', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error completo al obtener opciones de CPC:', {
-            message: error.message,
-            stack: error.stack,
-            sql: error.sql
-        });
-
+        console.error('Error al obtener productos MGA:', error);
         return res.status(500).json({
             success: false,
             error: 'Error del servidor',
-            details: process.env.NODE_ENV === 'development' ? {
-                message: error.message,
-                sql: error.sql
-            } : undefined,
             data: []
         });
     }
 });
 
-router.get('/productos-mga', async (req, res) => {
+// Endpoint para obtener opciones de Secretarías
+router.get('/secretarias', async (req, res) => {
     try {
-        // 1. Verificar conexión a la BD
-        await db.raw('SELECT 1');
+        const { query } = req.query;
         
-        // 2. Verificar si la tabla existe
-        const tableExists = await db.schema.withSchema('sis_cuipo').hasTable('producto_mga');
-        if (!tableExists) {
-            return res.status(404).json({
-                success: false,
-                error: 'La tabla producto_mga no existe en el esquema sis_cuipo',
-                data: []
-            });
-        }
-
-        // 3. Consultar todos los productos MGA (campo concatenar)
-        const productos = await db
+        const resultados = await db
             .withSchema('sis_cuipo')
-            .select('concatenar', 'codigo')
-            .from('producto_mga')
-            .orderBy('concatenar', 'asc');
+            .distinct('Secretaria')
+            .from('cuipo_plantilla_distrito_2025_primer_trimestre_plan_b')
+            .where('Secretaria', 'ILIKE', `%${query || ''}%`)
+            .orderBy('Secretaria', 'asc');
 
-        if (!productos || productos.length === 0) {
-            return res.json({
-                success: true,
-                message: 'No se encontraron productos MGA',
-                data: []
-            });
-        }
-
-        // 4. Mapear resultados
-        const opciones = productos.map(p => ({
-            valorCompleto: p.concatenar,
-            codigo: p.codigo
-        }));
+        const opciones = resultados.map(r => r.Secretaria);
 
         return res.json({
             success: true,
@@ -221,22 +197,103 @@ router.get('/productos-mga', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al obtener productos MGA:', {
-            message: error.message,
-            stack: error.stack,
-            sql: error.sql
-        });
-
+        console.error('Error al obtener secretarías:', error);
         return res.status(500).json({
             success: false,
-            error: 'Error del servidor al obtener productos MGA',
-            details: process.env.NODE_ENV === 'development' ? {
-                message: error.message,
-                sql: error.sql
-            } : undefined,
+            error: 'Error del servidor',
             data: []
         });
     }
 });
+
+// Endpoint principal para validar y obtener datosrouter.post('/validar-datos', async (req, res) => {
+router.post('/validar-datos', async (req, res) => {
+    try {
+        const { cpc, producto, secretaria } = req.body;
+
+        if (!cpc && !producto && !secretaria) {
+            return res.status(400).json({
+                success: false,
+                error: 'Debe proporcionar al menos un criterio de búsqueda (CPC, Producto o Secretaría)'
+            });
+        }
+
+        const codigoProducto = producto?.split(' - ')[0].substring(0, 7);
+
+        const ejecucionResultados = await db
+            .withSchema('sis_cuipo')
+            .select('etiquetas_de_fila')
+            .from('ejecucion')
+            .where('producto_cuipo', 'ILIKE', `${codigoProducto}%`);
+
+        const etiquetas = [...new Set(ejecucionResultados.map(e => e.etiquetas_de_fila))];
+
+        if (etiquetas.length === 0) {
+            return res.json({
+                success: true,
+                message: 'No hay coincidencias en ejecución para el producto MGA seleccionado',
+                data: []
+            });
+        }
+
+        const resultados = await db
+            .withSchema('sis_cuipo')
+            .select(
+                'programacion.etiquetas_de_fila',
+                'programacion.vigencia_gasto',
+                'programacion.seccion_ptal_cuipo',
+                'programacion.sector_cuipo',
+                'programacion.detalle_sectorial_prog_gasto',
+                'programacion.suma_de_ppto_inicial',
+                'programacion.suma_de_total_ppto_actual',
+                'ejecucion.pospre_cuipo',
+                'ejecucion.producto_cuipo',
+                'ejecucion.cpc_cuipo',
+                'ejecucion.fuente_cuipo',
+                'ejecucion.situacion_de_fondos',
+                'ejecucion.suma_de_ejecucion',
+                'ejecucion.suma_de_factura',
+                'ejecucion.suma_de_pagos'
+            )
+            .from('ejecucion')
+            .innerJoin('programacion', 'ejecucion.etiquetas_de_fila', 'programacion.etiquetas_de_fila')
+            .whereIn('ejecucion.etiquetas_de_fila', etiquetas)
+            .andWhere('ejecucion.producto_cuipo', 'ILIKE', `${codigoProducto}%`);
+
+        if (resultados.length === 0) {
+            return res.json({
+                success: true,
+                message: 'No se encontraron datos en la relación ejecución-programación',
+                data: []
+            });
+        }
+
+        // Si se proporcionó CPC, filtrar los resultados según POSPRE_CUIPO
+        if (cpc) {
+            const primerDigitoCPC = cpc.split(' - ')[0].charAt(0);
+            const resultadosFiltrados = resultados.filter(row =>
+                row.pospre_cuipo?.endsWith(primerDigitoCPC)
+            );
+
+            return res.json({
+                success: true,
+                data: resultadosFiltrados
+            });
+        }
+
+        return res.json({
+            success: true,
+            data: resultados
+        });
+
+    } catch (error) {
+        console.error('Error en /validar-datos:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Ocurrió un error en el servidor'
+        });
+    }
+});
+
 
 module.exports = router;
